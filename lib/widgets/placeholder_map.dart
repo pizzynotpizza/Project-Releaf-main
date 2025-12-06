@@ -1,93 +1,193 @@
+// lib/widgets/placeholder_map.dart
 import 'package:flutter/material.dart';
 
-/// Simple placeholder map widget that mimics a map view
+/// แผนที่จำลอง (Mock) ไว้ใช้โชว์ UI ก่อนต่อ Google Maps จริง
+///
+/// ใช้ได้ทั้งใน MapScreen / TrackingScreen
 class PlaceholderMap extends StatelessWidget {
-  final String label;
-  final bool showMarkers;
-  
+  final double aspectRatio;
+  final bool showUserMarker;
+  final bool showSalengMarker;
+  final String? userLabel;
+  final String? salengLabel;
+  final EdgeInsetsGeometry? margin;
+  final VoidCallback? onRecenter;
+
   const PlaceholderMap({
     super.key,
-    this.label = 'Map View',
-    this.showMarkers = true,
+    this.aspectRatio = 16 / 9,
+    this.showUserMarker = true,
+    this.showSalengMarker = false,
+    this.userLabel,
+    this.salengLabel,
+    this.margin,
+    this.onRecenter,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.grey.shade300,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background gradient to simulate map
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Colors.blue.shade100, Colors.green.shade100],
-              ),
+    final theme = Theme.of(context);
+
+    final container = AspectRatio(
+      aspectRatio: aspectRatio,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(22),
+          image: const DecorationImage(
+            image: AssetImage('assets/images/mock_map_bg.jpg'),
+            fit: BoxFit.cover,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
-          ),
-          // Grid pattern
-          CustomPaint(
-            painter: _MapGridPainter(),
-          ),
-          // Center markers/label
-          if (showMarkers)
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.location_on, size: 48, color: Colors.red),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
+          ],
+        ),
+        child: Stack(
+          children: [
+            // ป้ายหัวด้านบน
+            Positioned(
+              left: 16,
+              top: 12,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.45),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(
+                      Icons.map_rounded,
+                      size: 14,
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
                     ),
-                    child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ],
+                    SizedBox(width: 6),
+                    Text(
+                      'แผนที่จำลอง (ยังไม่เชื่อมต่อ Google Maps)',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          // Top-left label
-          Positioned(
-            top: 12,
-            left: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
+
+            // ปุ่ม recenter มุมขวาบน
+            Positioned(
+              right: 14,
+              top: 14,
+              child: Material(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                shape: const CircleBorder(),
+                elevation: 3,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: onRecenter,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(
+                      Icons.my_location_rounded,
+                      size: 20,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
               ),
-              child: const Text('Map', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
             ),
-          ),
-        ],
+
+            // Marker ผู้ใช้
+            if (showUserMarker)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.location_on_rounded,
+                        size: 34,
+                        color: Colors.redAccent,
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          userLabel ?? 'ตำแหน่งของคุณ',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Marker ซาเล้ง
+            if (showSalengMarker)
+              Positioned(
+                left: 32,
+                top: 32,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.pedal_bike_rounded,
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        salengLabel ?? 'ซาเล้ง',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
-  }
-}
 
-class _MapGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.black12
-      ..strokeWidth = 0.5;
-
-    const gridSize = 50.0;
-    for (double i = 0; i < size.width; i += gridSize) {
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    if (margin != null) {
+      return Container(
+        margin: margin,
+        child: container,
+      );
     }
-    for (double i = 0; i < size.height; i += gridSize) {
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
-    }
+    return container;
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
